@@ -19,10 +19,8 @@ class Token(Enum):
 
     def toToken(self, str):
         for token in self.value:
-            if (self.strToken == str):
+            if self.strToken == str:
                 return self
-            else:
-                return print("error")
 
     def toString(self, tok):
         return tok.strToken
