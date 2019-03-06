@@ -32,5 +32,5 @@ class BinOp(Expr):
         else:
             return False
 
-        exprstr = self.left + " " + opstr + " " + self.right
+        exprstr = self.left.toString() + " " + opstr + " " + self.right.toString()
         return "(" + exprstr + ")"

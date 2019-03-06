@@ -13,5 +13,5 @@ class Assign(Expr):
         return self.rhs
 
     def toString(self):
-        exprStr = self.varName + " = " + self.rhs
+        exprStr = self.varName + " = " + self.rhs.toString()
         return "(" + exprStr + ")"

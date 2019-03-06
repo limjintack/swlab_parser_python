@@ -11,3 +11,12 @@ class Terminal(StkElem):
 
     def getToken(self):
         return self.token
+
+    def getSyntax(self):
+        return self.syntax
+
+    def getchIndex(self):
+        return self.chIndex
+
+    def getlineIndex(self):
+        return self.lineIndex

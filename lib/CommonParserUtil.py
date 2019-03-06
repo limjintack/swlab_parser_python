@@ -75,10 +75,10 @@ class CommonParserUtil():
 
     def get(self, i):
         productionRuleStr = self.grammar_rules[self.productionRuleIdx]
-        splitRule = productionRuleStr.split("[\t ]")
+        splitRule = productionRuleStr.split()
         length = len(splitRule) - 2
 
-        last_stack_tree_index = len(self.stack)
+        last_stack_tree_index = len(self.stack) - 1
         offset = (length * 2) - ((i - 1) * 2 + 1)
         nt = self.stack[last_stack_tree_index - offset]
 
@@ -86,7 +86,7 @@ class CommonParserUtil():
 
     def getText(self, i):
         productionRuleStr = self.grammar_rules[self.productionRuleIdx]
-        splitRule = productionRuleStr.split("[\t ]")
+        splitRule = productionRuleStr.split()
         length = len(splitRule) - 2
 
         last_stack_tree_index = len(self.stack) - 1
@@ -135,10 +135,11 @@ class CommonParserUtil():
 
             data_arr = self.Check_state(currentState, currentTerminal, self.terminalList)
             order = data_arr[0]
+            print(data_arr)
 
             if order == "Accept":
                 self.terminalList.pop(0)
-                return self.stack[1]  # gettree
+                return self.stack[1].getTree()
             elif order == "Shift":
                 state = data_arr[1]
                 self.stack.append(currentTerminal)
@@ -159,7 +160,7 @@ class CommonParserUtil():
                     rhs = ""
                     rhsLength = 0
 
-                tr_b = self.treeBuilders[grammar_rule]
+                tr_b = self.treeBuilders[grammar_rule]()
                 if tr_b is not None:
                     tree = tr_b
                 else:
