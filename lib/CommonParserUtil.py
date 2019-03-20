@@ -1,13 +1,16 @@
 import re
 import os
+import traceback
+import subprocess
 
 from swlab_parser_python.lib.Nonterminal import Nonterminal
 from swlab_parser_python.lib.ParseState import ParseState
 from swlab_parser_python.lib.Terminal import Terminal
+from swlab_parser_python.lib.ParserException import ParserException
+from swlab_parser_python.lib.LexerException import LexerException
 
 
 class CommonParserUtil():
-    workingdir = "./"
 
     def __init__(self):
         self.terminalList = []
@@ -22,6 +25,8 @@ class CommonParserUtil():
         self.tokenBuilders = {}
 
         self.productionRuleIdx = 0
+
+        self.workingdir = "./"
 
     def lex(self, regExp, TokFunc):
         self.tokenBuilders[regExp] = TokFunc
@@ -39,7 +44,6 @@ class CommonParserUtil():
             line = lineArr[line_idx].rstrip("\n")
 
             front_idx = 0
-            endIdx = 0
             while front_idx < len(line):
                 for i in range(len(keys)):
                     regExp = keys[i]
@@ -58,6 +62,8 @@ class CommonParserUtil():
                         if tb(str):
                             self.terminalList.append(Terminal(str, tb(str), startIdx, lineno))
                         break
+                if i >= len(keys):
+                    raise LexerException("No Pattern Matching " + front_idx + ", " + line[0:front_idx])
 
             lineno += 1
         tb = self.tokenBuilders[self.endOfTok]
@@ -96,30 +102,107 @@ class CommonParserUtil():
         return nt.getSyntax()
 
     def readInitialize(self):
-        self.grammar_rules.clear();
-        self.action_table.clear();
-        self.goto_table.clear();
+        try:
+            self.grammar_rules.clear();
+            self.action_table.clear();
+            self.goto_table.clear();
 
-        grammarFReader = open(os.getcwd() + "\\grammar_rules.txt", mode='r', encoding='utf-8')
-        actionFReader = open(os.getcwd() + "\\action_table.txt", mode='r', encoding='utf-8')
-        gotoFReader = open(os.getcwd() + "\\goto_table.txt", mode='r', encoding='utf-8')
+            grammarFReader = open(os.getcwd() + "/grammar_rules.txt", mode='r', encoding='utf-8')
+            actionFReader = open(os.getcwd() + "/action_table.txt", mode='r', encoding='utf-8')
+            gotoFReader = open(os.getcwd() + "/goto_table.txt", mode='r', encoding='utf-8')
 
-        for line in grammarFReader:
-            arr = line.rstrip().split(":", 2)
-            grammerNum = int(arr[0].replace(" ", ""))
-            grammer = arr[1].strip()
+            for line in grammarFReader:
+                arr = line.rstrip().split(":", 2)
+                grammerNum = int(arr[0].replace(" ", ""))
+                grammer = arr[1].strip()
 
-            self.grammar_rules[grammerNum] = grammer
+                self.grammar_rules[grammerNum] = grammer
 
-        for line in actionFReader:
-            self.action_table.append(line.rstrip())
+            for line in actionFReader:
+                self.action_table.append(line.rstrip())
 
-        for line in gotoFReader:
-            self.goto_table.append(line.rstrip())
+            for line in gotoFReader:
+                self.goto_table.append(line.rstrip())
 
-        grammarFReader.close();
-        actionFReader.close();
-        gotoFReader.close();
+            grammarFReader.close();
+            actionFReader.close();
+            gotoFReader.close();
+        except FileNotFoundError:
+            self.createGrammarRules()
+
+    def createGrammarRules(self):
+        objGrammar = list(self.treeBuilders.keys())
+        nonterminals = []
+
+        for i in range(len(objGrammar)):
+            nonT_grammar = objGrammar[i]
+            nonT_data = nonT_grammar.split('->')
+            if not nonT_data[0].rstrip() in nonterminals:
+                nonterminals.append(nonT_data[0].rstrip())
+
+        fileContent = "CFG \"" + self.startSymbol + "\" [\n"
+
+        for i in range(len(objGrammar)):
+            T_grammar = objGrammar[i]
+            T_data = T_grammar.split('->')
+
+            fileContent += "\tProductionRule \"" + T_data[0].rstrip() + "\" ["
+
+            if len(T_data) > 1 and len(T_data[1].rstrip()) > 0:
+                tok = T_data[1].rstrip().split()
+
+                for j in range(len(tok)):
+                    if tok[j] in nonterminals:
+                        fileContent += "Nonterminal \""
+                    else:
+                        fileContent += "Terminal \""
+
+                    fileContent += tok[j] + "\""
+
+                    if j < len(tok) - 1:
+                        fileContent += ", "
+            fileContent += "]"
+            if i < len(objGrammar) - 1:
+                fileContent += ", \n"
+            else:
+                fileContent += "\n"
+
+        fileContent += "]"
+
+        directory = os.getcwd() + self.getWorkingdir()
+        grammarPath = directory + "/mygrammar.grm"
+
+        try:
+            writer = open(grammarPath, 'w')
+            writer.write(fileContent)
+            writer.close()
+        except FileNotFoundError:
+            traceback.print_exc()
+
+        grammarRulesPath = directory + "/grammar_rules.txt"
+        actionTablePath = directory + "/action_table.txt"
+        gotoTablePath = directory + "/goto_table.txt"
+
+        try:
+            print("genlrparser is starting...")
+            p = subprocess.Popen(directory + "/genlrparser-exe" + " \"" + grammarPath + "\" -output \""
+                                 + grammarRulesPath + "\" \"" + actionTablePath + "\" \"" + gotoTablePath + "\"",
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+            '''
+            r = subprocess.Popen([directory + "/genlrparser-exe",
+                                  "\"" + grammarPath + "\" -output \"" + grammarRulesPath + "\" \"" + actionTablePath 
+                                  + "\" \"" + gotoTablePath + "\""]).wait()
+            '''
+
+            print("Waiting for genlrparser...")
+
+            readStr = p.stdout.readline().decode().rstrip()
+            print("genlrparser: ", readStr)
+            if readStr == "Done":
+                self.readInitialize()
+        except Exception:
+            traceback.print_exc()
 
     def parsing(self, reader):
         self.readInitialize()
@@ -135,7 +218,6 @@ class CommonParserUtil():
 
             data_arr = self.Check_state(currentState, currentTerminal, self.terminalList)
             order = data_arr[0]
-            print(data_arr)
 
             if order == "Accept":
                 self.terminalList.pop(0)
@@ -164,17 +246,19 @@ class CommonParserUtil():
                 if tr_b is not None:
                     tree = tr_b
                 else:
-                    print("error")
+                    raise ParserException("Unexpected grammar rule " + grammar_rule_num + "\n" + "In reduce "
+                                          + grammar_rule + " at " + currentState + " " + currentTerminal)
 
-                for leng in range(rhsLength):
+                for i in range(rhsLength):
                     self.stack.pop()
                     self.stack.pop()
 
                 currentState = self.stack[-1]
                 self.stack.append(Nonterminal(tree))
                 self.stack.append(self.get_st(currentState, lhs, self.terminalList))
+        raise ParserException("Empty Token in Lexer")
 
-    def Check_state(self, current_state, terminal, token):
+    def Check_state(self, current_state, terminal, tokens):
         for actionTable_str in self.action_table:
             data = actionTable_str.split()
 
@@ -183,10 +267,8 @@ class CommonParserUtil():
             if current_state.getState() == data[0]:
                 index = 1
 
-                ''' # 자바와 파이썬 split 차이인지 쓰이질 않음.
                 while data[index] == "" or data[index] == "\t":
                     index = index + 1
-                '''
 
                 index_Token = terminal.getToken().toToken(data[index])
                 if terminal.getToken() == index_Token:
@@ -195,6 +277,21 @@ class CommonParserUtil():
                             continue
                         return_data.append(data[i])
                     return return_data
+
+        err = "Unexpected G " + terminal.getSyntax() + " at " + current_state.getState() + " in the action table. \n"
+
+        err_ch_index = -1
+        err_line_index = -1
+        culprit = "no hint"
+
+        if not tokens:
+            t = tokens[0]
+            err_ch_index = t.getchIndex()
+            err_line_index = t.getlineIndex()
+            culprit = t.getSyntax()
+
+        raise ParserException("Line " + terminal.getLineIndex() + " : Char " + terminal.getChIndex() + " : "
+                              + "Parsing error " + err.toString(), culprit, err_line_index, err_ch_index)
 
     def get_st(self, current_state, index, tokens):
         count = 0
@@ -218,3 +315,23 @@ class CommonParserUtil():
                     break
             count += 1
             location = 0
+
+        err = "Not found in Goto Table: " + current_state + " " + index + "\n"
+
+        err_ch_index = -1
+        err_line_index = -1
+        culprit = "no hint"
+
+        if not tokens:
+            t = tokens[0]
+            err_ch_index = t.getchIndex()
+            err_line_index = t.getlineIndex()
+            culprit = t.getSyntax()
+
+        raise ParserException("Parsing error " + err.toString(), culprit, err_line_index, err_ch_index)
+
+    def getWorkingdir(self):
+        return self.workingdir
+
+    def setWorkingdir(self, dir):
+        self.workingdir = dir

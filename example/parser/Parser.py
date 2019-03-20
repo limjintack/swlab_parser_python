@@ -18,9 +18,8 @@ class Parser:
 
         self.pu.rule("SeqExpr' -> SeqExpr",
                      lambda : begin(self.pu.get(1)))
-        #self.pu.rule("SeqExpr -> SeqExpr ; AssignExpr", lambda: begin(temp.extend(self.pu.get(1)), temp.extend(self.pu.get(3))))
         self.pu.rule("SeqExpr -> SeqExpr ; AssignExpr",
-                     lambda: begin(seqexpr.append(self.pu.get(3)), seqexpr) if isinstance(self.pu.get(1), list) else begin(seqexpr.append(self.pu.get(3)), seqexpr))
+                     lambda: begin(seqexpr.append(self.pu.get(3)), seqexpr))
 
         self.pu.rule("SeqExpr -> AssignExpr",
                      lambda: begin(seqexpr.append(self.pu.get(1)), seqexpr))
