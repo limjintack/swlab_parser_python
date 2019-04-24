@@ -1,9 +1,9 @@
-from swlab_parser_python.example.ast.Assign import Assign
-from swlab_parser_python.example.ast.BinOp import BinOp
-from swlab_parser_python.example.ast.Lit import Lit
-from swlab_parser_python.example.ast.Var import Var
-from swlab_parser_python.lib.CommonParserUtil import CommonParserUtil
-from swlab_parser_python.example.parser.Lexer import Lexer
+from example.ast.Assign import Assign
+from example.ast.BinOp import BinOp
+from example.ast.Lit import Lit
+from example.ast.Var import Var
+from lib.CommonParserUtil import CommonParserUtil
+from example.parser.Lexer import Lexer
 
 class Parser:
     def __init__(self):

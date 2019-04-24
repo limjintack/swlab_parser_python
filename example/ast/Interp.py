@@ -1,7 +1,7 @@
-from swlab_parser_python.example.ast.Assign import Assign
-from swlab_parser_python.example.ast.Lit import Lit
-from swlab_parser_python.example.ast.Var import Var
-from swlab_parser_python.example.ast.BinOp import BinOp
+from example.ast.Assign import Assign
+from example.ast.Lit import Lit
+from example.ast.Var import Var
+from example.ast.BinOp import BinOp
 
 class Interp:
 

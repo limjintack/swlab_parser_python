@@ -3,14 +3,14 @@ import os
 import traceback
 import subprocess
 
-from swlab_parser_python.lib.Nonterminal import Nonterminal
-from swlab_parser_python.lib.ParseState import ParseState
-from swlab_parser_python.lib.Terminal import Terminal
-from swlab_parser_python.lib.ParserException import ParserException
-from swlab_parser_python.lib.LexerException import LexerException
+from lib.Nonterminal import Nonterminal
+from lib.ParseState import ParseState
+from lib.Terminal import Terminal
+from lib.ParserException import ParserException
+from lib.LexerException import LexerException
 
 
-class CommonParserUtil():
+class CommonParserUtil:
 
     def __init__(self):
         self.terminalList = []
@@ -50,20 +50,20 @@ class CommonParserUtil():
                     p = ps[i]
                     matcher = p.match(line, front_idx)
 
-                    if matcher != None:
+                    if matcher:
                         startIdx = matcher.start()
                         endIdx = matcher.end()
 
-                        str = line[startIdx:endIdx]
+                        mat_str = line[startIdx:endIdx]
                         tb = self.tokenBuilders[regExp]
 
                         front_idx = endIdx
 
-                        if tb(str):
-                            self.terminalList.append(Terminal(str, tb(str), startIdx, lineno))
+                        if tb(mat_str):
+                            self.terminalList.append(Terminal(mat_str, tb(mat_str), startIdx, lineno))
                         break
                 if i >= len(keys):
-                    raise LexerException("No Pattern Matching " + front_idx + ", " + line[0:front_idx])
+                    raise LexerException("No Pattern Matching " + front_idx + ", " + line[front_idx:])
 
             lineno += 1
         tb = self.tokenBuilders[self.endOfTok]
@@ -187,20 +187,14 @@ class CommonParserUtil():
             print("genlrparser is starting...")
             p = subprocess.Popen(directory + "/genlrparser-exe" + " \"" + grammarPath + "\" -output \""
                                  + grammarRulesPath + "\" \"" + actionTablePath + "\" \"" + gotoTablePath + "\"",
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-
-            '''
-            r = subprocess.Popen([directory + "/genlrparser-exe",
-                                  "\"" + grammarPath + "\" -output \"" + grammarRulesPath + "\" \"" + actionTablePath 
-                                  + "\" \"" + gotoTablePath + "\""]).wait()
-            '''
-
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             print("Waiting for genlrparser...")
 
             readStr = p.stdout.readline().decode().rstrip()
             print("genlrparser: ", readStr)
             if readStr == "Done":
                 self.readInitialize()
+
         except Exception:
             traceback.print_exc()
 
@@ -333,5 +327,5 @@ class CommonParserUtil():
     def getWorkingdir(self):
         return self.workingdir
 
-    def setWorkingdir(self, dir):
-        self.workingdir = dir
+    def setWorkingdir(self, working_dir):
+        self.workingdir = working_dir

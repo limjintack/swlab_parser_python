@@ -1,4 +1,4 @@
-from swlab_parser_python.lib.StkElem import StkElem
+from lib.StkElem import StkElem
 
 
 class ParseState(StkElem):

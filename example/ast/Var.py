@@ -1,4 +1,4 @@
-from swlab_parser_python.example.ast.Expr import Expr
+from example.ast.Expr import Expr
 
 
 class Var(Expr):

@@ -1,5 +1,5 @@
-from swlab_parser_python.lib.CommonParserUtil import CommonParserUtil
-from swlab_parser_python.example.parser.Token import Token
+from lib.CommonParserUtil import CommonParserUtil
+from example.parser.Token import Token
 
 class Lexer:
 
